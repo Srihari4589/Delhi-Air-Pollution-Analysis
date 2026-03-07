@@ -1,5 +1,7 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
+import os
 
 
 st.set_page_config(
@@ -13,9 +15,10 @@ st.subheader(
 )
 
 
-tab_intro, tab_proposal, tab_team = st.tabs([
+tab_intro, tab_proposal, tab_explore, tab_team = st.tabs([
     "Introduction",
     "Proposal Overview",
+    "Data Exploration",
     "Team"
 ])
 
@@ -61,61 +64,52 @@ with tab_intro:
     """)
 
     # ============================================================
-    # Illustrative Visual
+    # Heatmap
     # ============================================================
 
-    st.subheader("Seasonal Pollution Patterns: When Delhi Suffocates")
-
     import plotly.express as px
+    import plotly.graph_objects as go
+    import pandas as pd
     import numpy as np
+    import os
 
-    # Create seasonal heatmap data
-    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    years = list(range(2015, 2025))
+    # Load actual master data
+    master = pd.read_csv("data/master_daily.csv")
+    master["date"] = pd.to_datetime(master["date"])
+    master["year"]  = master["date"].dt.year
+    master["month"] = master["date"].dt.month
 
-    # Simulate realistic seasonal patterns
-    heatmap_data = []
-    for year in years:
-        row = []
-        for month in range(12):
-            base = 150 + (year - 2015) * 5
-            if month in [9, 10, 11, 0, 1]:  # Oct-Feb (winter)
-                value = base * 1.6 + np.random.randint(-20, 30)
-            elif month in [5, 6, 7]:  # Jun-Aug (monsoon)
-                value = base * 0.5 + np.random.randint(-15, 15)
-            else:
-                value = base + np.random.randint(-10, 20)
-            row.append(min(value, 500))  # Cap at 500
-        heatmap_data.append(row)
+    # Real monthly average AQI heatmap
+    heatmap_data = master.groupby(["year", "month"])["aqi"].mean().reset_index()
+    heatmap_pivot = heatmap_data.pivot(index="year", columns="month", values="aqi")
+    month_labels  = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 
-    # Create heatmap
     fig = px.imshow(
-        heatmap_data,
-        labels=dict(x="Month", y="Year", color="AQI"),
-        x=months,
-        y=years,
+        heatmap_pivot,
+        labels=dict(x="Month", y="Year", color="Avg AQI"),
+        x=month_labels,
+        y=heatmap_pivot.index.tolist(),
         color_continuous_scale=[
-            [0, '#2ecc71'],      # Green (Good)
-            [0.2, '#f1c40f'],    # Yellow (Moderate)
-            [0.4, '#e67e22'],    # Orange (Unhealthy)
-            [0.6, '#e74c3c'],    # Red (Very Unhealthy)
-            [1, '#8b0000']       # Dark Red (Hazardous)
+            [0,   '#2ecc71'],
+            [0.2, '#f1c40f'],
+            [0.4, '#e67e22'],
+            [0.6, '#e74c3c'],
+            [1.0, '#8b0000']
         ],
-        aspect="auto"
+        aspect="auto",
+        text_auto=".0f"
     )
 
     fig.update_layout(
-        title="Air Quality Heatmap: Delhi's Pollution Crisis Intensifies in Winter",
+        title="Air Quality Heatmap: Delhi's Actual Monthly AQI (2016–2024)",
         height=450,
         xaxis_title="",
         yaxis_title=""
     )
-
     fig.update_xaxes(side="top")
 
     st.plotly_chart(fig, use_container_width=True)
-    st.caption("*Darker red indicates hazardous air quality. Notice the consistent winter pollution crisis (Oct-Feb) across all years.*")
-
+    st.caption("*Based on real sensor data from OpenAQ and CPCB. Darker red indicates hazardous air quality. Notice the consistent winter pollution crisis (Oct–Feb) across all years.*")
     
 
     
@@ -182,55 +176,61 @@ with tab_intro:
 
     import plotly.graph_objects as go
 
-    years = list(range(2015, 2025))
-    avg_pm25 = [85, 92, 98, 105, 112, 108, 118, 125, 130, 135]
-    who_guideline = 5  # WHO 2021 guideline
+    annual_pm25 = (
+    master.dropna(subset=["pm25_avg"])
+    .groupby("year")["pm25_avg"]
+    .mean()
+    .reset_index()
+    )
+
+    who_guideline  = 15   # WHO 2021 24hr guideline
+    india_standard = 60   # India NAAQS annual standard
 
     fig = go.Figure()
 
-    # Add bars with color gradient based on severity
-    colors = ['#f39c12' if pm < 100 else '#e74c3c' if pm < 120 else '#c0392b' for pm in avg_pm25]
+    colors = [
+        '#f39c12' if pm < 100 else '#e74c3c' if pm < 130 else '#c0392b'
+        for pm in annual_pm25["pm25_avg"]
+    ]
 
     fig.add_trace(go.Bar(
-        x=years,
-        y=avg_pm25,
-        name='Annual Average PM2.5',
+        x=annual_pm25["year"],
+        y=annual_pm25["pm25_avg"].round(1),
+        name="Annual Average PM2.5",
         marker_color=colors,
-        text=[f'{val} µg/m³' for val in avg_pm25],
-        textposition='outside'
+        text=[f'{val:.1f} µg/m³' for val in annual_pm25["pm25_avg"]],
+        textposition="outside"
     ))
 
-    # Add WHO guideline
     fig.add_trace(go.Scatter(
-        x=years,
-        y=[who_guideline] * len(years),
-        name='WHO Guideline (2021)',
-        line=dict(color='green', width=3, dash='dash'),
-        mode='lines'
+        x=annual_pm25["year"],
+        y=[who_guideline] * len(annual_pm25),
+        name="WHO 24hr Guideline (15 µg/m³)",
+        line=dict(color="green", width=3, dash="dash"),
+        mode="lines"
     ))
 
-    # Add India National Standard
     fig.add_trace(go.Scatter(
-        x=years,
-        y=[40] * len(years),
-        name='India NAAQS Standard',
-        line=dict(color='orange', width=2, dash='dot'),
-        mode='lines'
+        x=annual_pm25["year"],
+        y=[india_standard] * len(annual_pm25),
+        name="India NAAQS Standard (60 µg/m³)",
+        line=dict(color="orange", width=2, dash="dot"),
+        mode="lines"
     ))
 
     fig.update_layout(
-        title="Delhi's PM2.5 Levels vs. Safety Standards",
+        title="Delhi's Actual Annual Average PM2.5 vs Safety Standards (2016–2024)",
         xaxis_title="Year",
         yaxis_title="Annual Average PM2.5 (µg/m³)",
         height=500,
         showlegend=True,
-        yaxis_range=[0, 150],
-        hovermode='x unified'
+        yaxis_range=[0, annual_pm25["pm25_avg"].max() * 1.2],
+        hovermode="x unified",
+        xaxis=dict(tickmode="linear", dtick=1)
     )
 
     st.plotly_chart(fig, use_container_width=True)
-    st.caption("*Delhi's PM2.5 levels are 15-27x higher than WHO guidelines, indicating severe long-term health risks including respiratory disease, cardiovascular problems, and reduced life expectancy.*")
-
+    st.caption("*Based on real OpenAQ sensor data averaged across all Delhi monitoring stations. Delhi's PM2.5 consistently exceeds both WHO and India NAAQS thresholds across all years.*")
 
     # ============================================================
     # Existing Solutions & Gaps
@@ -399,113 +399,441 @@ with tab_intro:
     """, unsafe_allow_html=True)
 
 
-    with tab_proposal:
-        st.header("Proposal Overview")
+with tab_proposal:
+    st.header("Proposal Overview")
 
-        st.markdown("""
-        ### Research Topic
+    st.markdown("""
+    ### Research Topic
 
-        **Urban Suffocation: A Spatiotemporal Analysis of Air Pollution, Policy, Weather, and Public Response in Delhi**
+    **Urban Suffocation: A Spatiotemporal Analysis of Air Pollution, Policy, Weather, and Public Response in Delhi**
 
-        This project focuses on understanding how air pollution in Delhi—measured primarily through PM2.5 and AQI—has evolved
-        over the past decade and how extreme pollution episodes are shaped by meteorological conditions, policy interventions,
-        and public attention. By integrating environmental, weather, satellite, and behavioral data, the study aims to move
-        beyond descriptive AQI reporting toward identifying recurring patterns and early-warning signals.
-        """)
+    This project focuses on understanding how air pollution in Delhi—measured primarily through PM2.5 and AQI—has evolved
+    over the past decade and how extreme pollution episodes are shaped by meteorological conditions, policy interventions,
+    and public attention. By integrating environmental, weather, satellite, and behavioral data, the study aims to move
+    beyond descriptive AQI reporting toward identifying recurring patterns and early-warning signals.
+    """)
 
-        st.markdown("""
-        ### Main Research Objective
+    st.markdown("""
+    ### Main Research Objective
 
-        The central goal of this project is to answer the following question:
+    The central goal of this project is to answer the following question:
 
-        **How do weather conditions, government policy actions, and public attention interact with—and potentially precede—
-        severe air quality episodes in Delhi?**
+    **How do weather conditions, government policy actions, and public attention interact with—and potentially precede—
+    severe air quality episodes in Delhi?**
 
-        Rather than treating pollution events as isolated incidents, this project investigates whether extreme AQI days follow
-        identifiable spatiotemporal and meteorological patterns that can be detected using historical data.
-        """)
+    Rather than treating pollution events as isolated incidents, this project investigates whether extreme AQI days follow
+    identifiable spatiotemporal and meteorological patterns that can be detected using historical data.
+    """)
 
-        st.markdown("""
-        ### Scope of the Study
+    st.markdown("""
+    ### Scope of the Study
 
-        The scope of this project includes:
-        - Long-term trend analysis of PM2.5 and AQI levels in Delhi from approximately **2015 to 2025**
-        - Integration of meteorological variables such as **temperature, wind speed, humidity, and visibility**
-        - Seasonal and year-over-year comparison of pollution severity and duration
-        - Limited use of **satellite-based aerosol indicators** to complement ground sensor data
-        - Analysis of **public attention signals** using Google Trends as a proxy for societal response
-        - Comparison of pollution behavior before, during, and after major policy interventions such as **GRAP** and **odd-even schemes**
-        """)
+    The scope of this project includes:
+    - Long-term trend analysis of PM2.5 and AQI levels in Delhi from approximately **2015 to 2025**
+    - Integration of meteorological variables such as **temperature, wind speed, humidity, and visibility**
+    - Seasonal and year-over-year comparison of pollution severity and duration
+    - Limited use of **satellite-based aerosol indicators** to complement ground sensor data
+    - Analysis of **public attention signals** using Google Trends as a proxy for societal response
+    - Comparison of pollution behavior before, during, and after major policy interventions such as **GRAP** and **odd-even schemes**
+    """)
 
-        st.markdown("""
-        ### Key Datasets
+    st.markdown("""
+    ### Key Datasets
 
-        The project draws from multiple authoritative and publicly available datasets:
+    The project draws from multiple authoritative and publicly available datasets:
 
-        - **Air Quality Data:**  
-        Ground-level PM2.5, PM10, and AQI measurements from CPCB and OpenAQ monitoring stations across Delhi
+    - **Air Quality Data:**  
+    Ground-level PM2.5, PM10, and AQI measurements from CPCB and OpenAQ monitoring stations across Delhi
 
-        - **Meteorological Data:**  
-        Hourly weather records from NOAA or IMD, including temperature, wind speed, humidity, and visibility
+    - **Meteorological Data:**  
+    Hourly weather records from NOAA or IMD, including temperature, wind speed, humidity, and visibility
 
-        - **Satellite Observations:**  
-        Aerosol Optical Depth (AOD) data from Sentinel-5P / MODIS, used selectively for spatial comparison
+    - **Satellite Observations:**  
+    Aerosol Optical Depth (AOD) data from Sentinel-5P / MODIS, used selectively for spatial comparison
 
-        - **Public Attention Indicators:**  
-        Google Trends data for pollution- and health-related search queries (e.g., “N95 mask”, “air purifier”)
+    - **Public Attention Indicators:**  
+    Google Trends data for pollution- and health-related search queries (e.g., “N95 mask”, “air purifier”)
 
-        - **Policy and Event Timelines:**  
-        GRAP implementation phases, odd-even traffic schemes, and major seasonal or festival periods
-        """)
+    - **Policy and Event Timelines:**  
+    GRAP implementation phases, odd-even traffic schemes, and major seasonal or festival periods
+    """)
 
-        st.markdown("""
-        ### Analytical Approach
+    st.markdown("""
+    ### Analytical Approach
 
-        The analysis will proceed in multiple stages:
-        - Exploratory data analysis to understand baseline pollution behavior and variability
-        - Temporal alignment of air quality, weather, satellite, and public attention data
-        - Seasonal decomposition to separate long-term trends from recurring seasonal patterns
-        - Correlation and joint analysis of meteorological variables with AQI levels
-        - Identification of recurring conditions preceding extreme pollution episodes
-        - Visualization of spatiotemporal patterns using time series plots and spatial summaries
-        """)
+    The analysis will proceed in multiple stages:
+    - Exploratory data analysis to understand baseline pollution behavior and variability
+    - Temporal alignment of air quality, weather, satellite, and public attention data
+    - Seasonal decomposition to separate long-term trends from recurring seasonal patterns
+    - Correlation and joint analysis of meteorological variables with AQI levels
+    - Identification of recurring conditions preceding extreme pollution episodes
+    - Visualization of spatiotemporal patterns using time series plots and spatial summaries
+    """)
 
-        st.markdown("""
-        ### Expected Outcomes
+    st.markdown("""
+    ### Expected Outcomes
 
-        By the end of the project, we expect to:
-        - Identify **when pollution is most severe** in Delhi and how long extreme episodes persist
-        - Understand **which weather conditions** consistently worsen or prolong pollution events
-        - Observe how **public attention responds** to pollution peaks in terms of timing and intensity
-        - Evaluate whether historical data shows **early-warning signals** before severe AQI spikes
-        - Provide insights that could support **data-driven early-warning systems** and targeted interventions
-        """)
+    By the end of the project, we expect to:
+    - Identify **when pollution is most severe** in Delhi and how long extreme episodes persist
+    - Understand **which weather conditions** consistently worsen or prolong pollution events
+    - Observe how **public attention responds** to pollution peaks in terms of timing and intensity
+    - Evaluate whether historical data shows **early-warning signals** before severe AQI spikes
+    - Provide insights that could support **data-driven early-warning systems** and targeted interventions
+    """)
 
-        st.markdown("""
-        ### Timeline
+    st.markdown("""
+    ### Timeline
 
-        - **Phase 1 (Weeks 1–3):** Data collection, cleaning, and integration  
-        - **Phase 2 (Weeks 4–6):** Exploratory analysis and seasonal pattern identification  
-        - **Phase 3 (Weeks 7–9):** Correlation analysis and predictive modeling  
-        - **Phase 4 (Weeks 10–12):** Visualization, interpretation, and final report preparation
-        """)
+    - **Phase 1 (Weeks 1–3):** Data collection, cleaning, and integration  
+    - **Phase 2 (Weeks 4–6):** Exploratory analysis and seasonal pattern identification  
+    - **Phase 3 (Weeks 7–9):** Correlation analysis and predictive modeling  
+    - **Phase 4 (Weeks 10–12):** Visualization, interpretation, and final report preparation
+    """)
 
-        st.markdown("""
-        ### Generalizability
+    st.markdown("""
+    ### Generalizability
 
-        Although this study focuses on Delhi, the analytical framework developed here—combining air quality,
-        meteorology, satellite signals, and public response—can be adapted to other rapidly urbanizing cities
-        facing similar air pollution challenges, particularly across South and Southeast Asia.
-        """)
+    Although this study focuses on Delhi, the analytical framework developed here—combining air quality,
+    meteorology, satellite signals, and public response—can be adapted to other rapidly urbanizing cities
+    facing similar air pollution challenges, particularly across South and Southeast Asia.
+    """)
 
+    st.divider()
+
+    st.markdown("""
+    ### Course: Data Mining   
+    ### Group 10: 
+    **Abhirama Karthikeya Mullapudi, Thiyagu Rajendran, Srihari Pulagalla, Natarajan Krishnan**
+    """)
+
+with tab_explore:
+
+    FIGURES_DIR = "data/figures"
+
+    def show_plot(html_filename, title, what, interpretation):
+        st.subheader(title)
+        html_path = os.path.join(FIGURES_DIR, html_filename)
+        
+        if os.path.exists(html_path):
+            # 1. Read the HTML file content
+            with open(html_path, 'r', encoding='utf-8') as f:
+                html_content = f.read()
+            
+            # 2. Render the HTML component
+            # Note: You may need to adjust the 'height' to match your plot
+            components.html(html_content, height=500, scrolling=True)
+        else:
+            st.warning(f"Figure not found: {html_filename}")
+            
+        st.markdown(f"**📊 What we are plotting:** {what}")
+        st.markdown(f"**💡 Interpretation:** {interpretation}")
         st.divider()
 
-        st.markdown("""
-        ### Course: Data Mining   
-        ### Group 10: 
-        **Abhirama Karthikeya Mullapudi, Thiyagu Rajendran, Srihari Pulagalla, Natarajan Krishnan**
-        """)
+    # ================================================================
+    # SECTION 1: DATA COLLECTION
+    # ================================================================
+    st.header("1. Data Collection")
 
+    st.markdown("""
+    All datasets were collected from dynamic, authoritative APIs or official government portals.
+    No static or pre-packaged datasets were used. Each source addresses a distinct dimension of
+    the research problem — pollution measurements, atmospheric conditions, official AQI records,
+    and public behavioral response.
+    """)
+
+    st.markdown("""
+    #### 🌫️ Air Quality — OpenAQ v3 API
+    **Source:** [OpenAQ Platform](https://openaq.org) | **Method:** REST API with geographic bounding box filtering
+
+    Station discovery used the `/v3/locations` endpoint with a Delhi bounding box (28.40°N–28.88°N, 76.84°E–77.35°E)
+    since the city-name filter returned incorrect international results. This returned 47 active sensors across
+    major stations including Anand Vihar, Punjabi Bagh, R.K. Puram, Civil Lines, and the US Diplomatic Post.
+
+    A 2023–2024 data gap was discovered during diagnostics — OpenAQ re-indexed sensor IDs around 2023,
+    with old IDs stopping at 2022 and new IDs starting in 2025. This was resolved using the CPCB source below.
+
+    **Coverage:** 2016–2022, 2025 | 47 sensors | 23,430 rows | **Variables:** PM2.5, PM10 (daily per station)  
+    **Relevance:** Primary signal for Research Questions 1–6
+    """)
+
+    st.markdown("""
+    #### 🏛️ AQI 2023–2024 — Central Pollution Control Board (CPCB)
+    **Source:** [CPCB / data.gov.in](https://cpcb.nic.in) | **Method:** Direct download from official government portal
+
+    The CPCB API only supports real-time readings with a 30-day rolling window — bulk historical access does not exist.
+    Direct download was therefore the only viable option. 
+
+    **Coverage:** 2023–2024 | 730 daily rows | **Variables:** City-level daily AQI for Delhi  
+    **Relevance:** Fills the OpenAQ continuity gap; official government-verified source
+    """)
+
+    st.markdown("""
+    #### 🌤️ Meteorological Data — Open-Meteo Historical Archive API
+    **Source:** [Open-Meteo](https://archive-api.open-meteo.com) | **Method:** REST API, no authentication required
+
+    Open-Meteo provides ERA5 reanalysis data from the European Centre for Medium-Range Weather Forecasts (ECMWF) —
+    a bias-corrected, spatially continuous product preferred over raw station observations which may contain gaps.
+    Seven variables were collected for Delhi's coordinates (28.6139°N, 77.2090°E). Visibility was requested
+    but unavailable in ERA5 daily aggregation and was dropped.
+
+    **Coverage:** 2016–2025 | 3,624 daily rows | **Variables:** Temp (max/min/mean), wind speed (max/mean), humidity, precipitation  
+    **Relevance:** Primary input for Research Questions 3, 4, and 6
+    """)
+
+    st.markdown("""
+    #### 🔍 Public Attention — Google Trends via pytrends
+    **Source:** [Google Trends](https://trends.google.com) | **Method:** pytrends library with chunked 74-day API requests
+
+    Google Trends returns weekly data for ranges over 90 days but daily data for ranges under 90 days.
+    To achieve daily granularity over 9 years, requests were split into 74-day chunks (~44 requests per keyword).
+    Rate limiting (HTTP 429) was handled with 10-second pauses between chunks and exponential backoff
+    (30s → 150s).
+
+    **Keywords:** "air pollution Delhi", "AQI Delhi", "N95 mask", "air purifier", "breathing problem"  
+    **Coverage:** 2016–2025 | ~3,200 daily rows | **Relevance:** Research Questions 7 and 8
+    """)
+
+    st.divider()
+
+    # ================================================================
+    # SECTION 2: BEFORE / AFTER CLEANING
+    # ================================================================
+    st.header("2. Before & After Cleaning")
+
+    st.markdown("""
+    Raw data arrived in four different formats with inconsistent schemas, granularities, and quality issues.
+    Below are representative snapshots showing the state of the data before and after the cleaning pipeline.
+    """)
+
+    st.markdown("### Air Quality: Raw OpenAQ → City-Level Daily")
+    col_b, col_a = st.columns(2)
+    with col_b:
+        st.markdown("**Before — Raw OpenAQ (sensor-level)**")
+        st.dataframe(pd.DataFrame({
+            "date":          ["2016-02-05", "2016-02-05", "2016-02-05", "2016-02-05", "2016-02-06"],
+            "value":         [124.0, 124.0, 203.0, None, 187.0],
+            "sensor_id":     [396, 396, 396, 396, 396],
+            "location_name": ["Punjabi Bagh"]*5,
+            "parameter":     ["pm25"]*5
+        }), use_container_width=True)
+        st.caption("Issues: duplicate rows, missing values, one row per sensor reading, date as string, no AQI")
+
+    with col_a:
+        st.markdown("**After — City-Level Daily**")
+        st.dataframe(pd.DataFrame({
+            "date":         ["2016-01-29", "2016-01-30", "2016-01-31", "2016-02-01", "2016-02-02"],
+            "pm25_avg":     [356.0, 203.0, 124.0, 136.0, 148.0],
+            "pm10_avg":     [272.4, 272.4, 272.4, 257.7, 257.7],
+            "aqi":          [443, 364, 304, 313, 322],
+            "aqi_category": ["Severe", "Very Poor", "Very Poor", "Very Poor", "Very Poor"]
+        }), use_container_width=True)
+        st.caption("Fixed: deduplicated, sensor-specific mean imputation, city-wide average, AQI computed from CPCB breakpoints")
+
+    st.markdown("### Master Dataset: Final Merged Output")
+    col_b2, col_a2 = st.columns(2)
+    with col_b2:
+        st.markdown("**Before — Four Separate, Unaligned Files**")
+        st.dataframe(pd.DataFrame({
+            "source":   ["OpenAQ", "OpenAQ", "Open-Meteo", "Open-Meteo", "Google Trends"],
+            "date":     ["2016-01-29", "2016-01-30", "2016-01-28", "2016-01-29", "2016-01-25"],
+            "variable": ["pm25 (sensor)", "pm25 (sensor)", "temp_max", "temp_max", "air_pollution_Delhi (weekly)"],
+            "value":    [356.0, 203.0, 25.5, 22.1, 50]
+        }), use_container_width=True)
+        st.caption("Issues: different date ranges, weekly vs daily granularity, no shared schema, no time features")
+
+    with col_a2:
+        st.markdown("**After — Unified Master Dataset**")
+        st.dataframe(pd.DataFrame({
+            "date":              ["2016-01-29", "2016-01-30", "2016-01-31"],
+            "pm25_avg":          [356.0, 203.0, 124.0],
+            "aqi":               [443, 364, 304],
+            "temp_mean":         [19.37, 17.37, 15.16],
+            "wind_speed_mean":   [5.72, 10.71, 10.02],
+            "air_pollution_Delhi":[50, 50, 65],
+            "season":            ["Winter", "Winter", "Winter"]
+        }), use_container_width=True)
+        st.caption("Fixed: left-joined on date, weather trimmed, trends expanded to daily, time features added | 2,963 rows × 19 columns")
+
+    st.divider()
+
+    # ================================================================
+    # SECTION 3: DATA CLEANING & PREPROCESSING
+    # ================================================================
+    st.header("3. Data Cleaning & Preprocessing")
+
+    st.markdown("""
+    **Date Parsing & Type Standardization**  
+    All four sources stored dates as strings. These were converted to `datetime64` using `pd.to_datetime()`.
+    Google Trends returned timezone-aware timestamps which required stripping before merging with
+    timezone-naive AQ and weather dates.
+    """)
+
+    st.markdown("""
+    **Missing Values**  
+    - OpenAQ raw: 4 missing `value` rows → imputed with **sensor-specific mean** (more accurate than global mean
+    since Anand Vihar sensors read 2–3× higher than Pusa sensors on average)  
+    - `pm10_avg`: 41 missing days (early 2016, fewer PM10 sensors active) → **linear interpolation** for gaps ≤7 days,
+    **seasonal median** (same calendar month across all years) for longer gaps  
+    - Weather and Google Trends: 0 missing values after fetch and trim
+    """)
+
+    st.markdown("""
+    **Outliers & Physical Bounds**  
+    PM2.5 capped at 1,000 µg/m³ and PM10 at 1,500 µg/m³ to remove sensor malfunction artifacts.
+    Negative readings removed entirely. A PM10 minimum of −5.67 µg/m³ was documented as a known
+    calibration artifact affecting <0.01% of records.  
+    Google Trends: duplicate dates from 74-day chunk overlaps removed via index-level deduplication
+    before cross-keyword concatenation.
+    """)
+
+    st.markdown("""
+    **AQI Computation**  
+    AQI was computed from PM2.5 using India CPCB's official piecewise linear breakpoint table across
+    six categories (Good → Severe). For 2023–2024 CPCB rows, official AQI values were used directly
+    and tagged with `aqi_source = "cpcb_direct"` to distinguish from computed values.
+    """)
+
+    st.markdown("""
+    **Data Ethics & Limitations**  
+    - OpenAQ sensors are concentrated in central/south Delhi — industrial corridors in the east and north are underrepresented  
+    - Google Trends reflects internet-connected users only, skewing toward urban and younger demographics  
+    and cannot represent the full population bearing the health burden  
+    - CPCB 2023–2024 provides only city-level AQI without PM2.5/PM10 granularity, creating a partial
+    coverage gap for station-level spatial analysis in those years
+    """)
+
+    st.divider()
+
+    # ================================================================
+    # SECTION 4: SUMMARY STATISTICS
+    # ================================================================
+    st.header("4. Summary Statistics")
+
+    try:
+        master = pd.read_csv("data/master_daily.csv")
+        master["date"] = pd.to_datetime(master["date"])
+
+        summary_cols = ["pm25_avg", "pm10_avg", "aqi", "temp_mean",
+                        "wind_speed_mean", "humidity_mean", "precipitation"]
+
+        summary = master[summary_cols].describe().T.round(2)
+        summary["skewness"] = master[summary_cols].skew().round(3)
+        summary["missing"]  = master[summary_cols].isna().sum()
+        st.dataframe(summary, use_container_width=True)
+
+    except Exception as e:
+        st.warning(f"Could not load master dataset: {e}")
+
+    st.markdown("""
+    **Key observations from the statistics:**
+
+    - **PM2.5 mean (104.45 µg/m³)** is nearly 7× the WHO 24-hour guideline of 15 µg/m³. The mean-median gap
+    of ~26 µg/m³ reflects extreme winter spikes pulling the mean upward. The maximum of 750.83 µg/m³
+    is 50× the WHO limit.
+
+    - **PM10 negative minimum (−5.67 µg/m³)** is a known sensor calibration artifact retained as a
+    documented anomaly given its negligible frequency (<0.01% of records).
+
+    - **Precipitation skewness of 7.92** is the highest in the dataset — three-quarters of all days
+    record zero precipitation (25th, 50th, 75th percentiles all ≈ 0), while a handful of monsoon
+    days reach 122.70 mm.
+
+    - **PM2.5 and PM10 have 732 and 731 missing values** respectively — attributable entirely to 2023–2024
+    where only CPCB city-level AQI was available. AQI has only 1 missing value across 2,963 rows.
+
+    - **Modeling implication:** PM2.5 skewness of 2.01 and PM10 of 0.86 confirm right-tailed distributions.
+    Log transformation is required before applying any linear or parametric models in Milestone 3.
+    """)
+
+    # AQI Category breakdown
+    st.markdown("**AQI Category Distribution (2016–2024)**")
+    if 'master' in dir() and 'aqi_category' in master.columns:
+        cat_order  = ["Good", "Satisfactory", "Moderate", "Poor", "Very Poor", "Severe"]
+        cat_counts = master["aqi_category"].value_counts().reindex(cat_order).reset_index()
+        cat_counts.columns = ["AQI Category", "Days"]
+        cat_counts["Percentage"] = (cat_counts["Days"] / cat_counts["Days"].sum() * 100).round(1)
+        cat_counts["AQI Range"]  = ["0–50", "51–100", "101–200", "201–300", "301–400", "401–500"]
+        st.dataframe(cat_counts[["AQI Category", "AQI Range", "Days", "Percentage"]], use_container_width=True)
+        st.caption("Very Poor + Severe account for 47.8% of all days. Good + Satisfactory combined: only 13.8%.")
+
+    st.divider()
+
+    # ================================================================
+    # SECTION 5: VISUALIZATIONS
+    # ================================================================
+    st.header("5. Visualizations")
+
+    viz_list = [
+        (
+            "01_pm25_trend.html",
+            "VIZ 1 — PM2.5 Long-Term Trend (2016–2025)",
+            "Daily PM2.5 concentration across all Delhi stations with a 30-day rolling average, compared against WHO (15 µg/m³) and India NAAQS (60 µg/m³) guidelines.",
+            "PM2.5 levels surge dramatically every winter, often peaking at 10–20× the WHO limit, with spikes reaching nearly 600 µg/m³. Critically, even the seasonal troughs rarely dip below the WHO guideline, and the rolling mean stays above India NAAQS for significant portions of each year. No sustained downward trend is visible — Delhi's pollution crisis is structural, not episodic."
+        ),
+        (
+            "02_aqi_heatmap.html",
+            "VIZ 2 — Monthly AQI Heatmap (Year × Month)",
+            "Average AQI per month per year shown as a color-coded heatmap, where darker red indicates hazardous conditions.",
+            "The heatmap confirms a repeating pollution calendar — winter months (Nov–Jan) are universally dark red across all years, with AQI frequently in the 400–500 range. Despite various policy interventions over the years, the magnitude of winter peaks remains largely unchanged, confirming that seasonal meteorological forces dominate over policy effects."
+        ),
+        (
+            "03_season_violin.html",
+            "VIZ 3 — Season-wise AQI Distribution",
+            "Violin plots showing the distribution of daily AQI values across the four seasons: Winter, Spring, Monsoon, and Post-Monsoon.",
+            "Winter is the most hazardous season with its median AQI sitting well above the Very Poor threshold. Post-Monsoon shows a bimodal distribution — a transition from relatively clean air to extreme spikes as winter approaches. Even Monsoon presents significant outliers. Very Poor air is not an anomaly in Delhi but the statistical norm for nearly half the year."
+        ),
+        (
+            "06_severe_days.html",
+            "VIZ 4 — Annual Count of Very Poor and Severe AQI Days",
+            "Stacked bar chart showing the number of days per year classified as 'Very Poor' (AQI 300–400) or 'Severe' (AQI > 400).",
+            "Delhi records 70–150 dangerous air days annually — roughly 20–40% of every year. While 2016 saw 37 severe days and 2024 recorded 24, extreme peaks remain a persistent threat with no sustained downward trend. 2022 stands out as the lowest combined count, likely driven by favorable meteorological conditions rather than policy success."
+        ),
+        (
+            "07_correlation_heatmap.html",
+            "VIZ 5 — Correlation Matrix: Pollution vs Meteorological Variables",
+            "Pearson correlation heatmap between PM2.5, PM10, AQI, temperature, wind speed, humidity, and precipitation.",
+            "Temperature (r=−0.56) and precipitation (r=−0.28) are the strongest natural mitigators of pollution. Temperature range shows a moderate positive correlation (r=0.52), confirming that thermally stable days with narrow diurnal swings trap pollutants near the surface. Mean wind speed shows only a weak negative correlation (r=−0.20), suggesting thermal inversion effects dominate over wind dispersal as the primary driver."
+        ),
+        (
+            "08_trends_vs_pm25.html",
+            "VIZ 6 — Google Search Interest vs Actual PM2.5 (Dual Axis)",
+            "Monthly average PM2.5 on one axis and Google search interest for 'air pollution Delhi' and 'AQI Delhi' on the other, overlaid on the same timeline.",
+            "Search interest spikes almost perfectly mirror PM2.5 peaks. A notable post-2022 shift shows 'AQI Delhi' surpassing 'air pollution' as the dominant query, suggesting the public has moved toward seeking specific, actionable metrics. However, interest drops to near-zero as soon as PM2.5 subsides, confirming that public attention is purely reactive — driven by acute discomfort rather than sustained environmental concern."
+        ),
+        (
+            "09_aqi_stacked_bar.html",
+            "VIZ 7 — Annual AQI Category Breakdown",
+            "Stacked bar chart showing the number of days in each AQI category (Good to Severe) per year.",
+            "The proportion of unhealthy days (Moderate or worse) remains persistently high across the decade. A slight expansion of Good and Satisfactory days is visible in 2020 and 2024, likely reflecting pandemic-related activity shifts and favorable dispersion conditions rather than structural improvement. Healthy air remains a rare luxury in Delhi — the underlying baseline is still far from meeting global health standards."
+        ),
+        (
+            "11_pm_ratio.html",
+            "VIZ 8 — PM2.5/PM10 Ratio by Month and Year",
+            "Line plot of monthly PM2.5/PM10 ratio per year. A ratio above 0.5 indicates combustion sources (fine particles); below 0.5 indicates dust or coarse particles.",
+            "The ratio consistently climbs above 0.5 during winter (Nov–Jan), confirming that toxic winter peaks are driven primarily by combustion — crop burning, vehicles, and heating — rather than natural dust. Summer months see the ratio dip below 0.5 as wind-blown dust increases. A notable spike above 1.0 in March 2018 suggests an unusual combustion-heavy event that warrants further investigation."
+        ),
+        (
+            "12_rain_recovery.html",
+            "VIZ 9 — AQI Recovery Curve After Rain Events",
+            "Mean AQI for 5 days before and after significant rain events (>5mm precipitation), with standard deviation bands.",
+            "Following a significant rain event, mean AQI drops to its lowest point on Day 1 — a clear wet deposition effect. However, pollution rebounds steadily from Day 2 and returns to pre-rain baseline within just five days. This rapid recovery confirms that while rain provides immediate cleansing, it does not address the continuous high-volume emission sources dominating Delhi's landscape."
+        ),
+        (
+            "13_weekday_weekend.html",
+            "VIZ 10 — Weekday vs Weekend AQI",
+            "Bar chart of mean AQI per day of week with median trend line, comparing weekday (Mon–Fri) vs weekend (Sat–Sun) pollution levels.",
+            "AQI levels remain remarkably stable from Monday through Sunday, with overlapping error bars indicating no significant weekend effect. This confirms that Delhi's pollution is driven by constant, large-scale factors — industrial emissions, regional biomass burning, and freight transport — that far outweigh daily commuter traffic fluctuations. Localized traffic restrictions alone are insufficient without addressing these broader emission sources."
+        ),
+        (
+            "15_lag_correlation.html",
+            "VIZ 11 — Cross-Correlation: Google Trends vs AQI at Different Lags",
+            "Pearson correlation between AQI and three search keywords at time lags from -14 to +14 days. Negative lag means searches lead AQI.",
+            "Peak correlation (r≈0.3) for 'air pollution Delhi' and 'AQI Delhi' occurs at a 1-day positive lag — people search most intensely the day after a spike is recorded, not before. N95 mask searches show weak correlation across all lags, suggesting protective gear purchases are driven by seasonal readiness rather than acute episodes. Public digital behavior is reactive, not predictive — confirming it cannot serve as an early-warning signal under current patterns."
+        ),
+    ]
+
+    for img_file, title, what, interpretation in viz_list:
+        show_plot(img_file, title, what, interpretation)
 
 
 with tab_team:
@@ -561,8 +889,6 @@ with tab_team:
         [GitHub](https://github.com/Srihari4589)
         """)
 
-
-    st.markdown("---")
     st.markdown(
         "Our mission is to move beyond AQI reporting by identifying the patterns, conditions, and signals that precede severe air pollution events in Delhi, using data to inform timely awareness and intervention."
     )
