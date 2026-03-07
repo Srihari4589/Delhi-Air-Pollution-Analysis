@@ -6,3 +6,9 @@ seaborn
 plotly
 scikit-learn
 requests
+pytrends
+openmeteo-requests
+retry-requests
+tqdm
+python-dotenv
+python-dateutil
