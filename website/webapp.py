@@ -836,18 +836,6 @@ with tab_explore:
     for img_file, title, what, interpretation in viz_list:
         show_plot(img_file, title, what, interpretation)
 
-# ============================================================
-# MODELS IMPLEMENTED TAB — Drop into webapp.py
-# Add "Models Implemented" to the tab list, then paste this block
-# ============================================================
-
-# STEP 1: Update your tab declaration to add the new tab, e.g.:
-#
-#   tab_intro, tab_proposal, tab_explore, tab_models, tab_team = st.tabs([
-#       "Introduction", "Proposal Overview", "Data Exploration", "Models Implemented", "Team"
-#   ])
-#
-# STEP 2: Paste the entire block below as:  with tab_models:
 
 with tab_models:
 
