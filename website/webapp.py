@@ -15,13 +15,14 @@ st.subheader(
 )
 
 
-tab_intro, tab_proposal, tab_explore, tab_models, tab_team = st.tabs([
-    "Introduction",
-    "Proposal Overview",
-    "Data Exploration",
-    "Model Implementation",
-    "Team"
-])
+tab_intro, tab_proposal, tab_explore, tab_models, tab_conclusion, tab_team = st.tabs([
+      "Introduction",
+      "Proposal Overview",
+      "Data Exploration",
+      "Model Implementation",
+      "Conclusion",
+      "Team"
+  ])
 
 
 with tab_intro:
@@ -1744,6 +1745,557 @@ with tab_models:
     - Multi-day AQI forecasting capability
     - Time-based train/test split to prevent data leakage
     """)
+
+# ================================================================
+# CONCLUSION TAB — Milestone 4
+# ================================================================
+
+with tab_conclusion:
+
+    # ── Custom CSS scoped to this tab ──────────────────────────
+    st.markdown("""
+    <style>
+    .conc-hero {
+        background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 60%, #0f0f1a 100%);
+        border: 1px solid rgba(255,107,53,0.25);
+        border-radius: 16px;
+        padding: 2rem 2.5rem;
+        margin-bottom: 2rem;
+    }
+    .conc-hero h2 { margin:0; color:#ff6b35; letter-spacing:-0.02em; }
+    .conc-hero p  { margin:0.6rem 0 0; color:#bbb; font-size:1rem; max-width:850px; line-height:1.6; }
+
+    .finding-card {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border: 1px solid rgba(255,107,53,0.25);
+        border-radius: 12px;
+        padding: 1.4rem 1.6rem;
+        margin-bottom: 1rem;
+        height: 100%;
+    }
+    .finding-card .num {
+        display: inline-block;
+        background: rgba(255,107,53,0.15);
+        color: #ff6b35;
+        font-weight: 800;
+        font-size: 0.8rem;
+        padding: 0.2rem 0.7rem;
+        border-radius: 12px;
+        letter-spacing: 0.08em;
+        margin-bottom: 0.6rem;
+    }
+    .finding-card .title {
+        color: #fff; font-weight: 700; font-size: 1.05rem; margin-bottom: 0.5rem;
+    }
+    .finding-card .body { color: #bbb; font-size: 0.9rem; line-height: 1.55; }
+
+    .rq-card {
+        background: #0f0f1a;
+        border: 1px solid rgba(52,152,219,0.25);
+        border-left: 4px solid #3498db;
+        border-radius: 0 10px 10px 0;
+        padding: 1rem 1.3rem;
+        margin: 0.6rem 0;
+    }
+    .rq-card .rq-num {
+        display: inline-block;
+        background: rgba(52,152,219,0.15);
+        color: #3498db;
+        font-weight: 800;
+        font-size: 0.72rem;
+        padding: 0.2rem 0.6rem;
+        border-radius: 10px;
+        letter-spacing: 0.08em;
+        margin-bottom: 0.5rem;
+    }
+    .rq-card .rq-q {
+        color: #fff;
+        font-weight: 600;
+        font-size: 0.95rem;
+        margin-bottom: 0.5rem;
+        line-height: 1.45;
+    }
+    .rq-card .rq-a { color: #bbb; font-size: 0.88rem; line-height: 1.55; }
+    .rq-card .rq-a b { color: #ff6b35; }
+
+    .impact-card {
+        background: #0f0f1a;
+        border-left: 4px solid #ff6b35;
+        border-radius: 0 10px 10px 0;
+        padding: 1rem 1.3rem;
+        margin: 0.6rem 0;
+    }
+    .impact-card .who {
+        color: #ff6b35; font-weight: 700; font-size: 0.9rem;
+        letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 0.3rem;
+    }
+    .impact-card .what { color: #ccc; font-size: 0.92rem; line-height: 1.55; }
+
+    .limit-box {
+        background: rgba(241,196,15,0.06);
+        border: 1px solid rgba(241,196,15,0.25);
+        border-radius: 10px;
+        padding: 0.9rem 1.2rem;
+        margin: 0.6rem 0;
+        color: #ccc; font-size: 0.9rem; line-height: 1.55;
+    }
+    .limit-box b { color: #f1c40f; }
+
+    .future-card {
+        background: rgba(52,152,219,0.06);
+        border: 1px solid rgba(52,152,219,0.3);
+        border-radius: 10px;
+        padding: 1rem 1.3rem;
+        margin: 0.6rem 0;
+        color: #ccc; font-size: 0.9rem; line-height: 1.55;
+    }
+    .future-card b { color: #3498db; }
+
+    .stat-pill {
+        display: inline-block;
+        background: rgba(255,107,53,0.12);
+        color: #ff6b35;
+        border: 1px solid rgba(255,107,53,0.3);
+        border-radius: 20px;
+        padding: 0.3rem 1rem;
+        margin: 0.2rem 0.3rem 0.2rem 0;
+        font-weight: 700;
+        font-size: 0.85rem;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # ── Hero header ────────────────────────────────────────────
+    st.markdown("""
+    <div class="conc-hero">
+        <h2>🎯 Conclusion & Results</h2>
+        <p>
+        What nine years of Delhi's air, weather, and public attention told us — in plain language.
+        This section summarizes our findings, answers each of the research questions we set out with,
+        explains what those answers mean for real people, and lays out where the study falls short
+        and what comes next.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ================================================================
+    # 1. NON-TECHNICAL SUMMARY
+    # ================================================================
+    st.header("1. What We Did — In Plain Language")
+
+    st.markdown("""
+    Delhi is one of the most polluted cities on earth, and every winter its residents breathe air
+    that is many times more dangerous than what the World Health Organization considers safe. Our
+    project set out to answer a simple question behind that crisis: **when does Delhi's air turn
+    toxic, why does it happen, and can we see it coming?**
+
+    To answer that, we built a nine-year record (2016–2024) by combining four very different kinds
+    of information. We pulled ground-level pollution readings from 47 sensors scattered across the
+    city, matched them with daily weather data (temperature, wind, humidity, rain), added official
+    air quality records from the government for the years where sensors were patchy, and layered on
+    top what people in Delhi were searching for on Google — terms like *"N95 mask"*, *"air purifier"*,
+    and *"AQI Delhi"* — as a measure of public attention.
+
+    We then used machine learning to do four things: **(1) predict** how bad the air will be on any
+    given day, **(2) group** days into natural "pollution regimes" without telling the computer what
+    a season is, **(3) estimate** actual AQI numbers from weather and pollution measurements, and
+    **(4) mine** the data for hidden if-then patterns — for example, "if it's cold AND the wind is
+    low AND PM2.5 is high, then the air will be severe".
+
+    What came back was not a mystery. Delhi's pollution is not random, not unpredictable, and not
+    improving. It is **a structural, repeating, foreseeable crisis** — and that is both the bad news
+    and the reason this kind of analysis matters.
+    """)
+
+    st.markdown("""
+    <div style="margin: 1rem 0;">
+        <span class="stat-pill">9 years analyzed</span>
+        <span class="stat-pill">2,963 daily records</span>
+        <span class="stat-pill">4 data sources</span>
+        <span class="stat-pill">5 ML models</span>
+        <span class="stat-pill">11 visualizations</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.divider()
+
+    # ================================================================
+    # 2. ANSWERING THE RESEARCH QUESTIONS
+    # ================================================================
+    st.header("2. Answering the Research Questions")
+
+    st.markdown("""
+    In Milestone 1 we defined ten research questions to guide this project. Each one is answered
+    below using the concrete results of our exploratory analysis and machine learning models.
+    """)
+
+    rq_answers = [
+        ("RQ 01",
+         "How have PM2.5 and AQI levels in Delhi evolved over the last decade?",
+         "PM2.5 and AQI have shown <b>no sustained downward trend</b> across the 2016–2024 window. "
+         "Annual mean PM2.5 remains consistently 5–7× the WHO guideline, and our Linear Regression "
+         "on year returned a statistically insignificant coefficient. 2022 stands out as the lowest "
+         "combined severe-day year, but that reflects favourable meteorology rather than structural "
+         "improvement — 2023 and 2024 rebounded immediately."),
+
+        ("RQ 02",
+         "Are severe pollution episodes concentrated in specific months or seasons?",
+         "Yes, emphatically. Winter (November–January) contains the overwhelming majority of Very "
+         "Poor and Severe days, with the monthly heatmap showing AQI routinely in the 400–500 range. "
+         "K-Means clustering confirmed this <i>without</i> being shown the season label — it "
+         "independently discovered <b>three regimes: Monsoon Clean, Severe Winter, and Transitional</b>."),
+
+        ("RQ 03",
+         "How does wind speed influence pollution dispersion during extreme AQI days?",
+         "Wind speed is a real but <b>secondary</b> dispersal mechanism. The correlation between "
+         "mean wind speed and AQI is only r = –0.20, much weaker than temperature's r = –0.56. "
+         "Apriori surfaced 'Wind_Low + Temp_Low + PM25_Severe → Severe AQI' as a high-confidence rule, "
+         "confirming that low wind amplifies cold-air pollution events but does not cause them."),
+
+        ("RQ 04",
+         "What role does temperature inversion play in prolonged pollution events?",
+         "A dominant one. Temperature range (max − min) correlates positively with AQI (r = +0.52), "
+         "meaning days with wide diurnal swings — classic inversion conditions where the ground "
+         "cools dramatically overnight — trap pollutants near the surface. In Linear Regression, "
+         "<b>temperature's coefficient (–3.10) exceeded wind speed's (–2.45)</b>, making inversion "
+         "the single strongest meteorological driver of Delhi's winter crisis."),
+
+        ("RQ 05",
+         "Are pollution spikes consistent year-over-year or becoming more severe?",
+         "Spikes are <b>remarkably consistent</b>, not escalating. The annual count of Very Poor + "
+         "Severe days has fluctuated between 70 and 150 across all nine years without trend. The "
+         "heatmap confirms that winter peak intensity has remained stable, and K-Means finds the "
+         "same three clusters every time we run it. Pollution peaks are structural features of "
+         "Delhi's climate-emission system, not anomalies."),
+
+        ("RQ 06",
+         "How do meteorological variables jointly correlate with AQI levels?",
+         "Together, temperature, wind, humidity, and precipitation explain <b>87.6% of AQI variance "
+         "(R² = 0.876)</b> in our Linear Regression. Individually: temperature (strongest negative, "
+         "coef. –3.10), wind speed (–2.45), precipitation (–1.12), and humidity (+0.82, confirming "
+         "humid stagnant air worsens pollution). The joint model substantially outperforms any "
+         "single-variable model."),
+
+        ("RQ 07",
+         "Does public search interest spike before, during, or after pollution peaks?",
+         "Public search interest peaks <b>one day <i>after</i></b> the AQI spike — never before. "
+         "Our cross-correlation analysis showed peak Pearson correlation (r ≈ 0.3) at a +1 day lag "
+         "for 'air pollution Delhi' and 'AQI Delhi'. Public digital behaviour is <b>reactive, not "
+         "predictive</b>, so it cannot serve as an early-warning signal."),
+
+        ("RQ 08",
+         "Are certain pollution events followed by stronger public attention than others?",
+         "Yes. The Google Trends vs PM2.5 overlay shows that <b>search interest magnitude scales "
+         "roughly with peak severity</b> — the worst spikes generate the largest search surges. "
+         "We also observed a post-2022 shift where 'AQI Delhi' overtook 'air pollution' as the "
+         "dominant query, suggesting the public has moved toward seeking specific, actionable "
+         "metrics during crises."),
+
+        ("RQ 09",
+         "Can historical AQI and weather patterns help anticipate severe pollution episodes?",
+         "Yes, with high accuracy. Our <b>Decision Tree classifier reached 95.5% accuracy and "
+         "ROC-AUC of 0.982</b> in predicting AQI category from meteorological and particulate "
+         "features. Apriori rules also produced confidence ≥ 0.89 antecedents of Severe AQI. The "
+         "data is predictable enough that a reliable early-warning system is genuinely feasible, "
+         "not aspirational."),
+
+        ("RQ 10",
+         "Do pollution trends show early-warning signals detectable from past data?",
+         "Yes, but they are <b>meteorological, not behavioural</b>. The combination of low "
+         "temperature, low wind, high humidity, and a rising PM2.5 baseline reliably precedes "
+         "Severe AQI episodes, as evidenced by our Apriori rules (up to <b>8.8× lift</b>) and "
+         "DBSCAN's ability to isolate the 5–8% of days that are genuine extreme outliers. Public "
+         "search behaviour, by contrast, <b>does not</b> lead AQI and cannot be used as a signal."),
+    ]
+
+    for num, q, a in rq_answers:
+        st.markdown(f"""
+        <div class="rq-card">
+            <div class="rq-num">{num}</div>
+            <div class="rq-q">{q}</div>
+            <div class="rq-a">{a}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.divider()
+
+    # ================================================================
+    # 3. KEY INSIGHTS & DISCOVERIES
+    # ================================================================
+    st.header("3. Key Insights & Discoveries")
+
+    st.markdown("""
+    Beyond the research questions, eight broader findings stood out across our analysis. Together
+    they form a coherent picture of *why* Delhi's air behaves the way it does — and they have
+    direct implications for how the city should respond.
+    """)
+
+    findings = [
+        ("Finding 01",
+         "Delhi's air is chronically dangerous — not occasionally",
+         "Across all nine years, <b>47.8% of days were classified as 'Very Poor' or 'Severe'</b> — "
+         "nearly one in every two days. Only 13.8% of days met even the 'Satisfactory' standard. "
+         "The average annual PM2.5 is almost <b>7× the WHO guideline</b>, and the worst days hit "
+         "<b>50× the limit</b>. Delhi's pollution isn't a winter event — it is a year-round baseline."),
+
+        ("Finding 02",
+         "Winter is the real crisis, and temperature tells us why",
+         "Temperature correlates with AQI at <b>r = –0.56</b> — stronger than wind speed (<b>r = –0.20</b>). "
+         "Our Linear Regression coefficients confirmed it: a 1°C drop in temperature raises AQI more than "
+         "a proportional drop in wind speed does. Cold air traps pollutants near the ground through thermal "
+         "inversion, and that mechanism overwhelms wind dispersal."),
+
+        ("Finding 03",
+         "Delhi has exactly three pollution 'modes'",
+         "Our K-Means clustering — which <i>did not</i> see the season label — still discovered three "
+         "natural groupings of days: a <b>Monsoon Clean</b> regime (July–August), a <b>Severe Winter</b> "
+         "regime (November–January), and a <b>Transitional</b> regime (spring and post-monsoon). "
+         "These clusters have been stable for nine years, with no sign of convergence toward cleaner air."),
+
+        ("Finding 04",
+         "PM2.5 is the single most important signal",
+         "Across every supervised model we trained — Decision Tree, Naive Bayes, Linear Regression — "
+         "<b>PM2.5 was the dominant feature</b>. The Decision Tree's very first split is on PM2.5. "
+         "Linear Regression assigns it the largest positive coefficient. Any early-warning system "
+         "for Delhi must start with reliable PM2.5 measurement, not a broader sensor suite."),
+
+        ("Finding 05",
+         "Machine learning can predict air quality with high accuracy",
+         "Our Decision Tree classifier reached <b>95.5% accuracy and a ROC-AUC of 0.982</b> in "
+         "predicting which of the six AQI categories a day falls into. Linear Regression explained "
+         "<b>87.6% of the variance (R² = 0.876)</b> in continuous AQI. The data has enough structure "
+         "that reliable forecasting is genuinely feasible, not aspirational."),
+
+        ("Finding 06",
+         "Public awareness is reactive, not predictive",
+         "We expected search interest in pollution topics to <i>precede</i> bad air days — people "
+         "noticing and preparing. It doesn't. Peak correlation between search interest and AQI occurs "
+         "at a <b>+1 day lag</b>: people search <i>the day after</i> the spike. Public digital behavior "
+         "cannot currently serve as an early-warning signal because awareness is driven by discomfort, "
+         "not by forecasts."),
+
+        ("Finding 07",
+         "Rain helps — but only for about five days",
+         "Our recovery-curve analysis found that significant rain events (>5mm) drop AQI to its "
+         "lowest point on Day 1, but pollution <b>rebounds to baseline within five days</b>. "
+         "Meteorological relief is real but short-lived, because the underlying emission sources "
+         "never pause. Policy cannot rely on weather as a mitigation strategy."),
+
+        ("Finding 08",
+         "There is no weekend effect — and that's telling",
+         "Weekday and weekend AQI are statistically indistinguishable. If traffic were the dominant "
+         "driver, we would see a clear dip on Saturdays and Sundays. We don't. This strongly suggests "
+         "that Delhi's pollution is driven by <b>always-on</b> sources — industrial emissions, regional "
+         "biomass burning, heavy freight — that dwarf daily commuter variation. Odd-even schemes alone "
+         "cannot solve it."),
+    ]
+
+    for i in range(0, len(findings), 2):
+        cols = st.columns(2, gap="medium")
+        for col, (num, title, body) in zip(cols, findings[i:i+2]):
+            with col:
+                st.markdown(f"""
+                <div class="finding-card">
+                    <div class="num">{num}</div>
+                    <div class="title">{title}</div>
+                    <div class="body">{body}</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+    st.divider()
+
+    # ================================================================
+    # 4. REAL-WORLD IMPACT
+    # ================================================================
+    st.header("4. Real-World Impact")
+
+    st.markdown("""
+    The insights above are not just academic. They point to concrete, practical consequences for
+    different groups of people and institutions in Delhi and beyond.
+    """)
+
+    impacts = [
+        ("For Delhi's 30+ million residents",
+         "A 95.5%-accurate AQI classifier means residents could receive reliable day-ahead health "
+         "alerts, letting vulnerable groups — children, the elderly, and people with asthma or heart "
+         "conditions — plan outdoor activity, schedule medication, and use air purifiers or N95 "
+         "masks <i>before</i> exposure rather than reacting to symptoms."),
+
+        ("For policymakers & the CPCB",
+         "Our results show that Delhi's pollution is <b>structural, not episodic</b>. Emergency "
+         "measures like GRAP and odd-even schemes address acute spikes but cannot fix a crisis that "
+         "is present on every non-monsoon day. Evidence points to the need for year-round, "
+         "source-level intervention: regional crop-burning coordination, industrial emission "
+         "controls, and freight-transport cleanup — not just winter crackdowns."),
+
+        ("For hospitals & public health systems",
+         "The three pollution regimes we identified are predictable, which means healthcare demand "
+         "is predictable. Hospitals can plan for respiratory and cardiovascular admission surges in "
+         "November–January, stock inhalers and nebulizers ahead of time, and pre-stage outpatient "
+         "capacity during known high-risk periods."),
+
+        ("For schools, employers, and outdoor workers",
+         "Predictable pollution regimes mean predictable disruptions. Schools can schedule outdoor "
+         "activities around forecast peaks instead of cancelling at the last minute. Employers can "
+         "plan hybrid arrangements for severe days. Construction and delivery workers — the most "
+         "exposed populations — can be equipped proactively with respiratory protection."),
+
+        ("For researchers & other megacities",
+         "The framework we built — combining ground sensors, reanalysis weather data, government "
+         "AQI records, and public search interest into a single analytical pipeline — is reusable. "
+         "Any rapidly urbanizing city in South or Southeast Asia facing similar air quality challenges "
+         "could apply this methodology to its own data."),
+    ]
+
+    for who, what in impacts:
+        st.markdown(f"""
+        <div class="impact-card">
+            <div class="who">{who}</div>
+            <div class="what">{what}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.divider()
+
+    # ================================================================
+    # 5. LIMITATIONS
+    # ================================================================
+    st.header("5. Limitations")
+
+    st.markdown("""
+    Honest reporting of what our study *cannot* tell us is as important as what it can.
+    Five limitations shape the scope of our conclusions.
+    """)
+
+    limitations = [
+        ("Sensor coverage is geographically uneven",
+         "The 47 OpenAQ sensors are concentrated in central and southern Delhi. Industrial corridors "
+         "in the east and north are underrepresented, so our city-wide averages may slightly "
+         "understate peak concentrations in those areas."),
+
+        ("Google Trends represents only online users",
+         "Public attention signals come from internet-connected residents — a population that "
+         "skews urban, younger, and higher-income. The communities bearing the heaviest health "
+         "burden (low-income outdoor workers, elderly residents without smartphones) are under-"
+         "represented in this signal."),
+
+        ("A data gap in 2023–2024",
+         "OpenAQ re-indexed its Delhi sensors around 2023, leaving a two-year gap we filled with "
+         "CPCB city-level daily AQI. Those rows have AQI but lack the station-level PM2.5/PM10 "
+         "granularity available for other years, limiting spatial analysis for that period."),
+
+        ("Temporal autocorrelation in the train/test split",
+         "We used a random 80/20 split for classification and regression. Because adjacent days are "
+         "highly correlated, some performance numbers likely benefit from mild train/test leakage. "
+         "A time-based split (train on 2016–2021, test on 2022–2024) would produce more conservative "
+         "— and more realistic — generalization estimates."),
+
+        ("Linear model assumptions are partially violated",
+         "PM2.5 is log-normally distributed, producing heteroscedastic residuals at extreme values. "
+         "Our Linear Regression is an excellent baseline but under-fits the severe upper tail where "
+         "forecasts matter most. A log-transformed or tree-based regressor would likely do better "
+         "on the days with the highest stakes."),
+    ]
+
+    for title, body in limitations:
+        st.markdown(f"""
+        <div class="limit-box">
+            <b>⚠ {title}.</b> {body}
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.divider()
+
+    # ================================================================
+    # 6. POTENTIAL IMPROVEMENTS & FUTURE WORK
+    # ================================================================
+    st.header("6. Potential Improvements & Future Work")
+
+    st.markdown("""
+    Every limitation above is also a direction. Six concrete extensions would meaningfully advance
+    this line of research.
+    """)
+
+    future = [
+        ("Temporal deep-learning models",
+         "Daily AQI is a time series, and our current models treat each day as independent. "
+         "An <b>LSTM or Transformer</b> trained with time-series cross-validation could capture "
+         "multi-day persistence effects and produce proper 3-to-7-day AQI forecasts rather than "
+         "same-day classification."),
+
+        ("Ensemble regressors",
+         "Replacing OLS with <b>Random Forest, Gradient Boosting, or XGBoost</b> would handle "
+         "PM2.5's log-normal distribution natively, capture feature interactions, and likely push "
+         "R² above 0.95. This is the single most impactful incremental improvement available."),
+
+        ("Satellite aerosol data integration",
+         "Incorporating <b>Sentinel-5P or MODIS Aerosol Optical Depth (AOD)</b> observations would "
+         "add spatial resolution across the city and fill the geographic gaps left by ground "
+         "sensors, particularly in the industrial east and north."),
+
+        ("Regional biomass-burning signals",
+         "Our analysis is Delhi-local, but Delhi's winter pollution is partly imported from "
+         "neighbouring states. Adding <b>NASA FIRMS fire-detection data</b> from Punjab and Haryana "
+         "would let the model distinguish local-emission days from crop-burning-imported days — "
+         "a crucial policy distinction."),
+
+        ("Public-health outcome linkage",
+         "Joining AQI forecasts with <b>hospital admission records</b> for respiratory and "
+         "cardiovascular cases would let us quantify the health cost of each severe day in lives "
+         "and rupees — moving from 'bad air is bad' to specific attributable harm."),
+
+        ("Real-time deployment",
+         "All of our models currently live in a notebook. Wrapping the Decision Tree classifier "
+         "and Linear Regression in a <b>public API or mobile app</b> with daily weather-forecast "
+         "inputs would turn this research into a tool residents could actually use."),
+    ]
+
+    for title, body in future:
+        st.markdown(f"""
+        <div class="future-card">
+            <b>→ {title}.</b> {body}
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.divider()
+
+    # ================================================================
+    # 7. FINAL TAKEAWAY
+    # ================================================================
+    st.header("7. Final Takeaway")
+
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 60%, #0f0f1a 100%);
+                border: 1px solid rgba(255,107,53,0.3);
+                border-radius: 14px;
+                padding: 1.8rem 2rem;
+                margin: 0.5rem 0;
+                font-size: 1rem;
+                line-height: 1.7;
+                color: #ddd;">
+    Delhi's air pollution is not an unsolvable mystery and it is not purely a weather problem.
+    Our nine-year, four-source, five-model analysis shows that it is a <b style="color:#ff6b35;">
+    structural, predictable, repeating crisis</b> — one that machine learning can forecast with
+    high accuracy, that follows three stable seasonal regimes, and that persists because its
+    root causes (year-round emissions, regional biomass burning, thermal inversions) are not
+    seriously disrupted by existing policy instruments.
+    <br><br>
+    The path forward is not mystery-solving. It is <b style="color:#ff6b35;">commitment</b> — to
+    reliable PM2.5 monitoring, to year-round source-level intervention, to timely public
+    warnings grounded in forecasts rather than discomfort, and to treating clean air as the
+    baseline right it should be, not the rare luxury our data shows it currently is.
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("")
+
+    st.markdown("""
+    <div style="text-align:center; color:#888; font-size:0.85rem; padding: 1rem 0;">
+    <i>Urban Suffocation — Data Mining, Group 10 · University of Colorado Boulder · Spring 2026</i>
+    </div>
+    """, unsafe_allow_html=True)
+
+
 
 with tab_team:
     st.header("Team")
